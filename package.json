@@ -1,0 +1,28 @@
+{
+  "name": "scriblz-server",
+  "version": "1.0.0",
+  "description": "server for scriblz game",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "start:watch": "nodemon --watch src --ext ts --exec 'npm start'"
+  },
+  "author": "Emily Kolar <emkolar@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@colyseus/command": "0.1.5",
+    "@colyseus/monitor": "0.12.2",
+    "axios": "0.19.2",
+    "colyseus": "0.13.7",
+    "cors": "2.8.5",
+    "express": "4.17.1",
+    "get-pixels": "3.3.2",
+    "serve-index": "1.9.1",
+    "superagent": "3.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "2.0.4",
+    "ts-node": "8.10.2",
+    "typescript": "3.9.6"
+  }
+}

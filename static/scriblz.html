@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width" />
+
+    <style>
+      body { font-family: Tahoma, Geneva, sans-serif; }
+    </style>
+
+    <!-- colyseus.js client -->
+    <script type="text/javascript" src="https://raw.githack.com/colyseus/colyseus.js/master/dist/colyseus.js"></script>
+
+    <style type="text/css">
+      .player {
+      width: 100px;
+      height: 100px;
+      position: absolute;
+      padding-top: 24px;
+      box-sizing: border-box;
+      left: 0;
+      top: 0;
+      }
+      #rack {
+        display: flex;
+        margin-top: 8px;
+      }
+      #info {
+        margin-top: 8px;
+      }
+      .tile {
+        width: 25px;
+        height: 25px;
+        padding-right: 2px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-right: 8px;
+        border: 1px solid silver;
+        user-select: none;
+        cursor: pointer;
+        position: relative;
+      }
+      .tile.blank {
+        padding-right: 0;
+      }
+      .tile:hover {
+        box-shadow: 0 0 5px rgba(0, 120, 255, 0.2);
+      }
+      .tile:last-child {
+        margin-right: 0;
+      }
+      .trading {
+        border-color: purple;
+      }
+      .pt {
+        position: absolute;
+        font-size: 8px;
+        right: 1px;
+        bottom: 1px;
+      }
+      #blank_letter {
+        margin-top: 8px;
+        display: none;
+      }
+      #blank_letter.show {
+        display: initial;
+      }
+    </style>
+
+  </head>
+  <body>
+
+    <input id="posx" placeholder="Start row" type="number" />
+    <input id="posy" placeholder="Start col" type="number" />
+    <br />
+    <br />
+    <input disabled id="input" />
+    <button class="btn" onclick="play()">play word</button>
+    <button class="btn" onclick="dictionary()">dictionary lookup</button>
+    <button class="btn" onclick="tradeTiles()">trade selected</button>
+    <br />
+    <br />
+
+    <div id="rack"></div>
+
+    <input id="blank_letter" placeholder="Blank letter (input)" />
+
+    <div id="info"></div>
+
+    <script>
+      var host = window.document.location.host.replace(/:.*/, '');
+
+      var client = new Colyseus.Client(location.protocol.replace("http", "ws") + "//" + host + (location.port ? ':' + location.port : ''));
+      var room;
+      var sessionId;
+      var infoEl;
+      var rackEl;
+      var inputEl;
+      var inputRowEl;
+      var inputColEl;
+      var blankInputEl;
+      var blankTileIdx = -1;
+
+      const rackTiles = [];
+      const tradingTiles = [];
+
+      window.addEventListener('load', () => {
+        infoEl = document.querySelector('#info');
+        rackEl = document.querySelector('#rack');
+        inputEl = document.querySelector('#input');
+        inputRowEl = document.querySelector('#posx');
+        inputColEl = document.querySelector('#posy');
+        blankInputEl = document.querySelector('#blank_letter');
+
+        blankInputEl.addEventListener('input', (evt) => {
+           const letter = evt.target.value.toUpperCase();
+           blankInputEl.value = letter;
+           inputEl.value = inputEl.value.replace('_', letter);
+        });
+      });
+
+      client.joinOrCreate("scriblz", { name: 'PlayerName' }).then(room_instance => {
+        room = room_instance
+        sessionId = room_instance.sessionId;
+
+        room.onMessage('scored', (data) => {
+           console.log(data);
+           inputEl.value = '';
+        });
+
+        room.onMessage('tiles', (data) => {
+          console.log(data);
+          if (rackEl) {
+            while (rackEl.firstChild) {
+              rackEl.removeChild(rack.firstChild);
+            }
+            const { tiles } = data;
+            tiles.forEach((tile) => {
+              const el = document.createElement('div');
+              const ptEl = document.createElement('div');
+              const id = `tile-${tile.display}`;
+              el.id = id;
+              el.classList.add('tile');
+              ptEl.classList.add('pt');
+              const txt = document.createTextNode(tile.display);
+              const pt = document.createTextNode(tile.value);
+              el.appendChild(txt);
+              if (tile.display !== '_') {
+                ptEl.appendChild(pt);
+              } else {
+                el.classList.add('blank');
+              }
+              el.appendChild(ptEl);
+              rackEl.append(el);
+              rackTiles.push(tile);
+              el.addEventListener('click', () => {
+                if (el.classList.contains('trading')) {
+                   const idx = tradingTiles.findIndex((t) => id === `tile-${t.display}`);
+                   tradingTiles.splice(idx, 1);
+                   const tileValues = inputEl.value.split('');
+                   tileValues.splice(idx, 1);
+                   inputEl.value = tileValues.join('');
+                   el.classList.remove('trading');
+                    if (tile.display === '_') {
+                    blankInputEl.classList.remove('show');
+                    }
+                 } else {
+                   tradingTiles.push(tile);
+                   el.classList.add('trading');
+                   inputEl.value = inputEl.value.concat(tile.display);
+                    if (tile.display === '_') {
+                    blankTileIdx = inputEl.value.length - 1;
+                    blankInputEl.classList.add('show');
+                    }
+                 }
+              });
+            });
+          }
+        });
+
+        room.onMessage('dictionary', (data) => {
+          console.log(data);
+        });
+
+        var players = {};
+        var colors = ['red', 'green', 'yellow', 'blue', 'cyan', 'magenta'];
+
+        // listen to patches coming from the server
+        room.state.players.onAdd = function (player, sessionId) {
+          var dom = document.createElement("div");
+          dom.className = "player";
+          dom.style.left = player.x + "px";
+          dom.style.top = player.y + "px";
+          dom.style.background = colors[Math.floor(Math.random() * colors.length)];
+          dom.innerText = "Player " + sessionId;
+
+          players[sessionId] = dom;
+          // document.body.appendChild(dom);
+        }
+
+        room.state.players.onRemove = function (player, sessionId) {
+          document.body.removeChild(players[sessionId]);
+          delete players[sessionId];
+        }
+
+        room.state.players.onChange = function (player, sessionId) {
+          var dom = players[sessionId];
+          dom.style.left = player.x + "px";
+          dom.style.top = player.y + "px";
+        }
+      });
+
+      var word = '';
+
+      function start() {
+        room.send("start", { y: -1 });
+      }
+
+      function saveWord(evt) {
+        word = evt.target.value;
+      }
+
+      function dictionary(evt) {
+        room.send('dictionary', { word: word.toLowerCase() });
+      }
+
+      function tradeTiles(evt) {
+        console.log(tradingTiles);
+        if (tradingTiles.length) {
+          room.send('trade', { tiles: tradingTiles });
+        }
+      }
+
+      document.querySelector('input').addEventListener('change', saveWord);
+
+      function play() {
+        if (!inputEl.value.includes('_')) {
+          const row = inputRowEl.value;
+          const col = inputColEl.value;
+          room.send("play-word", {
+              word: inputEl.value.substring(0, 7).toUpperCase(),
+              row,
+              col,
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
