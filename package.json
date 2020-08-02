@@ -4,20 +4,35 @@
   "description": "server for scriblz game",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "start:watch": "nodemon --watch src --ext ts --exec 'npm start'"
+    "start:old": "ts-node src/server.ts",
+    "start": "ts-node src/controller.ts",
+    "start:lance": "ts-node src/lance.ts",
+    "start:watch": "./node_modules/.bin/nodemon --watch src --ext ts --exec 'npm start'",
+    "start:proxy": "export PORT=4000; ts-node ./start.ts"
   },
   "author": "Emily Kolar <emkolar@gmail.com>",
   "license": "ISC",
   "dependencies": {
     "@colyseus/command": "0.1.5",
     "@colyseus/monitor": "0.12.2",
+    "@koa/cors": "3.1.0",
     "axios": "0.19.2",
+    "boardgame.io": "0.39.14",
+    "body-parser": "1.19.0",
     "colyseus": "0.13.7",
     "cors": "2.8.5",
+    "dotenv": "8.2.0",
     "express": "4.17.1",
     "get-pixels": "3.3.2",
+    "koa-bodyparser": "4.3.0",
+    "koa-connect": "2.1.0",
+    "koa-router": "9.1.0",
+    "lance-gg": "4.0.8",
+    "ngrok": "3.2.7",
+    "pusher": "3.0.1",
     "serve-index": "1.9.1",
+    "shortid": "2.2.15",
+    "socket.io": "2.3.0",
     "superagent": "3.8.1"
   },
   "devDependencies": {

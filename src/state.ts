@@ -36,7 +36,7 @@ const BOARD_SIZE = 15;
 
 const LETTERS = Object.keys(Dist);
 
-const getImagePixels = (path): any => {
+export const getImagePixels = (path): any => {
   return new Promise((resolve, reject) => {
     getPixels(path, (err, px) => {
       if (err) {
@@ -48,13 +48,13 @@ const getImagePixels = (path): any => {
   });
 };
 
-const convertUint8arrToInt = (arr: Uint8Array) => {
+export const convertUint8arrToInt = (arr: Uint8Array) => {
   const length = arr.length;
   const buffer = Buffer.from(arr);
   return buffer.readUIntBE(0, length);
 };
 
-const getMultiplierForRgb = (rgb: Uint8Array): Multiplier => {
+export const getMultiplierForRgb = (rgb: Uint8Array): Multiplier => {
   return multiplierTypes.find((mT) => {
     return convertUint8arrToInt(mT.rgb) === convertUint8arrToInt(rgb);
   });
