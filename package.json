@@ -22,7 +22,7 @@
     "colyseus": "0.13.7",
     "cors": "2.8.5",
     "dotenv": "8.2.0",
-    "express": "4.17.1",
+    "express": "4.17.3",
     "get-pixels": "3.3.2",
     "koa-bodyparser": "4.3.0",
     "koa-connect": "2.1.0",
